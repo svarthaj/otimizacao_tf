@@ -3,7 +3,7 @@ Trabalho final de Otimização Combinatória (INF05010)
 
 ## Problema
 
-### Knapsack Problem with COnflict Graph
+### Knapsack Problem with Conflict Graph
 
 ## Meta-heurística
 
