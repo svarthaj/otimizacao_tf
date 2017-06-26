@@ -1,4 +1,4 @@
-import sys
+import sys, os
 from data_parser.data_parser import *
 
 import heapq
@@ -8,13 +8,15 @@ from math import ceil
 #-------------------------------------------------------------------------------
 # general algorithms
 
-def hill_climbing(solution, objective_function, neighbors):
+def hill_climbing(solution, objective_function, neighbors, max_iterations):
     best_solution = solution
     curr = objective_function(best_solution)
     prev = curr - 1
 
-    while prev != curr:
+    iteration = 0
+    while prev != curr and iteration < max_iterations:
         prev = curr
+        iteration += 1
         for neighbor in neighbors(best_solution):
     	    if objective_function(neighbor) > objective_function(best_solution):
                 curr = objective_function(neighbor)
@@ -24,13 +26,13 @@ def hill_climbing(solution, objective_function, neighbors):
 
 def grasp(greedy_randomized_construction, local_search, neighbors, objective_function, max_iterations, alpha):
     best_solution = greedy_randomized_construction(alpha)
-    print 'new best: ' + str(objective_function(best_solution))
     for iteration in xrange(max_iterations):
+        sys.stderr.write('iteration {}\n'.format(iteration))
+
         solution = greedy_randomized_construction(alpha)
-        solution = local_search(solution, objective_function, neighbors)
+        solution = local_search(solution, objective_function, neighbors, max_iterations)
         if objective_function(solution) > objective_function(best_solution):
             best_solution = solution
-            print 'new best: ' + str(objective_function(best_solution))
 
     return best_solution
 
@@ -110,7 +112,9 @@ def neighboring_knapsacks_weight_1(knapsack):
         return unique
 
     neighbors = []
-    for item in knapsack:
+    sample_size = min(10, max(1, int(len(knapsack)*0.05)))
+    items = random.sample(knapsack, sample_size)
+    for item in items:
         item_removed = knapsack.copy()
         item_removed.remove(item)
         neighbors += fill_from(item_removed, item)
@@ -195,9 +199,6 @@ filename = sys.argv[1]
 max_iterations = int(sys.argv[2])
 
 solution = grasp(greedy_randomized_knapsack_construction, hill_climbing, neighboring_knapsacks_weight_1, knapsack_profit, max_iterations, alpha)
-print '-'*10 + ' final solution:'
-print 'set:', solution
-print 'profit:', knapsack_profit(solution)
-print 'weight:', knapsack_weight(solution)
+print os.path.basename(filename), knapsack_profit(solution)
 
 exit(0)
