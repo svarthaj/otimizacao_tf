@@ -176,24 +176,12 @@ random.seed(seed)
 
 # num_items: integer is a number of items
 # capacity: integer is maximum capacity of knapsack
-# items: set( item(i:integer, p:integer, w:integer) ) is the set of items
-# conflict: set( tuple(e1:integer, e2:integer) ) is a set of tuples for each item conflict
+# items: set( i:integer ) is the set of items by index
+# weights: dict( item: integer) dictionary key'd by item
+# profits: dict ( item: integer ), similar to weights
+# conflicts: dict( item: set( integers ) )is a dcit key'd bi items with each item having a set of conflicts
 
-num_items, capacity, items, conflicts = get_parameters(filename)
-
-all_items = [i.i for i in items]
-weights = {i.i: i.w for i in items}
-profits = {i.i: i.p for i in items}
-
-conflicts_dict = {}
-conflicts_dict.update({i: set() for i in all_items})
-for i, j in conflicts:
-    conflicts_dict[i].add(j)
-    conflicts_dict[j].add(i)
-
-#print num_items, capacity, len(items), conflicts_dict
-assert all([j in conflicts_dict[i] for i, j in conflicts])
-assert all([i in conflicts_dict[j] for i, j in conflicts])
+num_items, capacity, items, weights, profits, conflicts = get_parameters(filename)
 
 filename = sys.argv[1]
 max_iterations = int(sys.argv[2])
