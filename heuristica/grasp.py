@@ -11,6 +11,10 @@ else:
 # items: set( item(i:integer, p:integer, w:integer) ) is the set of items
 # conflict: set( tuple(e1, e2) ) is a set of tuples for each item conflict
 
-n, c, items, conflicts = get_parameters(filename)
+n, c, items, weights, profits, conflicts = get_parameters(filename)
 
-print n, c, len(items)
+print n, c
+print items
+print weights
+print profits
+print conflicts

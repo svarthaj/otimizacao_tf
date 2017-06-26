@@ -7,9 +7,12 @@ def get_parameters(filename):
     lines = input_file.read().splitlines(1)
     n = 0
     c = 0
+
     item = collections.namedtuple("item", ["i", "p", "w"])
     items = set()
-    conflicts = set()
+    weights = {}
+    profits = {}
+    conflicts = {}
 
     exps = "(param|set)\s*(c|n|: V : p w|E)\s*:=\s*(\d*);*"
     for line in lines:
@@ -24,16 +27,30 @@ def get_parameters(filename):
                     for l in range(lines.index(line), lines.index(line)+n+1):
                         m2 = re.match("\s*(\d+)\s*(\d+)\s*(\d+)", lines[l])
                         try:
-                            it = item(int(m2.group(1)), int(m2.group(2)), int(m2.group(3)))
+                            it = int(m2.group(1))
+                            p = int(m2.group(2))
+                            w = int(m2.group(3))
                             items.add(it)
+                            weights[it] = w
+                            profits[it] = p
                         except:
                             continue
             elif m1.group(1) == "set":
                 for l in range(lines.index(line), len(lines)+1):
                     m2 = re.match("\s*(\d+)\s*(\d+)", lines[l])
                     try:
-                        conf = (int(m2.group(1)), int(m2.group(2)))
-                        conflicts.add(conf)
+                        k1 = int(m2.group(1))
+                        k2 = int(m2.group(2))
+                        if k1 not in conflicts:
+                            conflicts[k1] = set()
+                            conflicts[k1].add(k2)
+                        else:
+                            conflicts[k1].add(k2)
+                        if k2 not in conflicts:
+                            conflicts[k2] = set()
+                            conflicts[k2].add(k1)
+                        else:
+                            conflicts[k2].add(k1)
                     except:
                         continue
             else:
@@ -41,4 +58,4 @@ def get_parameters(filename):
         except:
             continue
     
-    return n, c, items, conflicts
+    return n, c, items, weights, profits, conflicts
