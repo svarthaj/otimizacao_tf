@@ -40,16 +40,22 @@ def grasp(greedy_randomized_construction, local_search, neighbors, objective_fun
 # knapsack specific
 
 def knapsack_weight(knapsack):
-    return sum([weights[i] for i in knapsack])
+    w = 0
+    for i in knapsack:
+        w += weights[i]
+    return w
 
 def knapsack_profit(knapsack):
-    return sum([profits[i] for i in knapsack])
+    p = 0
+    for i in knapsack:
+        p += profits[i]
+    return p
 
-def can_add(item, knapsack):
+def can_add(item, knapsack, remaining_space):
     if item in knapsack:
         return False
 
-    if knapsack_weight(knapsack) + weights[item] > capacity:
+    if remaining_space - weights[item] < 0:
         return False
 
     if any([i in conflicts[item] for i in knapsack]):
@@ -70,8 +76,10 @@ def neigboring_knapsacks_hamming_1(knapsack):
     neighbors = []
     for item in items:
         neighbor = knapsack.copy()
-        if item not in knapsack and can_add(item, neighbor):
+        remain = capacity - knapsack_weight(neighbor)
+        if item not in knapsack and can_add(item, neighbor, remain):
             neighbor.add(item)
+            remain -= weights[item]
         elif item in knapsack:
             neighbor.remove(item)
         else: # cannot flip without becoming invalid
@@ -94,7 +102,8 @@ def neighboring_knapsacks_weight_1(knapsack):
         argument.
         """
         full_knapsacks = []
-        candidate_items = [i for i in items if can_add(i, knapsack) and i != excluded]
+        remain = capacity - knapsack_weight(knapsack)
+        candidate_items = [i for i in items if can_add(i, knapsack, remain) and i != excluded]
 
         if candidate_items != []:
             for item in candidate_items:
@@ -132,7 +141,8 @@ def neighboring_knapsacks_switch_1(knapsack):
         item_removed = knapsack.copy()
         item_removed.remove(item)
 
-        valid_items = [i for i in items if can_add(i, item_removed) and i != item]
+        remain = capacity - knapsack_weight(item_removed)
+        valid_items = [i for i in items if can_add(i, item_removed, remain) and i != item]
         new_neighbors = [item_removed.copy() for i in valid_items]
 
         for i, n in zip(valid_items, new_neighbors):
@@ -151,7 +161,7 @@ def greedy_randomized_knapsack_construction(alpha):
     remain = capacity
     while remain > 0:
         # build rcl
-        candidate_items = [i for i in items if can_add(i, knapsack)]
+        candidate_items = [i for i in items if can_add(i, knapsack, remain)]
         if not candidate_items:
             break
         rcl = heapq.nlargest(int(alpha*len(candidate_items)) + 1, candidate_items, key=lambda i: incremental_profits[i])
