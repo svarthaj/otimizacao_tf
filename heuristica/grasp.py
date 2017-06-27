@@ -27,7 +27,7 @@ def hill_climbing(solution, objective_function, neighbors, max_iterations):
 def grasp(greedy_randomized_construction, local_search, neighbors, objective_function, max_iterations, alpha):
     best_solution = greedy_randomized_construction(alpha)
     for iteration in xrange(max_iterations):
-        sys.stderr.write('iteration {}\n'.format(iteration))
+        #sys.stderr.write('iteration {}\n'.format(iteration))
 
         solution = greedy_randomized_construction(alpha)
         solution = local_search(solution, objective_function, neighbors, max_iterations)
@@ -148,14 +148,17 @@ def greedy_randomized_knapsack_construction(alpha):
     """
     knapsack = set()
     incremental_profits = {i: float(weights[i])/profits[i] for i in items}
-    while knapsack_weight(knapsack) <= capacity:
+    remain = capacity
+    while remain > 0:
         # build rcl
         candidate_items = [i for i in items if can_add(i, knapsack)]
         if not candidate_items:
             break
         rcl = heapq.nlargest(int(alpha*len(candidate_items)) + 1, candidate_items, key=lambda i: incremental_profits[i])
         # select element from rcl and update knapsack
-        knapsack.add(random.choice(rcl))
+        new_item = random.choice(rcl)
+        knapsack.add(new_item)
+        remain -= weights[new_item]
         # reevaluate incremental_profit (not needed here)
 
     return knapsack
@@ -177,9 +180,9 @@ random.seed(seed)
 # num_items: integer is a number of items
 # capacity: integer is maximum capacity of knapsack
 # items: set( i:integer ) is the set of items by index
-# weights: dict( item: integer) dictionary key'd by item
+# weights: dict ( item: integer) dictionary key'd by item
 # profits: dict ( item: integer ), similar to weights
-# conflicts: dict( item: set( integers ) )is a dcit key'd bi items with each item having a set of conflicts
+# conflicts: dict ( item: set( integers ) )is a dcit key'd by items and each entry has a set of conflicting other items
 
 num_items, capacity, items, weights, profits, conflicts = get_parameters(filename)
 

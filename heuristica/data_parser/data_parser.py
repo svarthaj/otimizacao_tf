@@ -1,5 +1,4 @@
 import sys, re
-import collections
 
 
 def get_parameters(filename):
@@ -8,7 +7,6 @@ def get_parameters(filename):
     n = 0
     c = 0
 
-    item = collections.namedtuple("item", ["i", "p", "w"])
     items = set()
     weights = {}
     profits = {}
