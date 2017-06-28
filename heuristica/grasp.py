@@ -1,5 +1,6 @@
 import sys, os
 from data_parser.data_parser import *
+import time
 
 import heapq
 import random
@@ -10,24 +11,29 @@ from math import ceil
 
 def hill_climbing(solution, objective_function, neighbors, max_iterations):
     best_solution = solution
-    curr = objective_function(best_solution)
-    prev = curr - 1
+    current_best = objective_function(best_solution)
+    previous_best = current_best - 1
 
+    repetition_count = 0
     iteration = 0
-    while prev != curr and iteration < max_iterations:
-        prev = curr
+    while repetition_count < 5:
+        previous_best = current_best
         iteration += 1
+        repetition_count += 1
         for neighbor in neighbors(best_solution):
-    	    if objective_function(neighbor) > objective_function(best_solution):
-                curr = objective_function(neighbor)
+            candidate = objective_function(neighbor)
+    	    if candidate > current_best:
     	        best_solution = neighbor
+                previous_best = current_best
+                current_best = candidate
+                repetition_count = 0
 
     return best_solution
 
 def grasp(greedy_randomized_construction, local_search, neighbors, objective_function, max_iterations, alpha):
     best_solution = greedy_randomized_construction(alpha)
     for iteration in xrange(max_iterations):
-        #sys.stderr.write('iteration {}\n'.format(iteration))
+        sys.stderr.write('iteration {}\n'.format(iteration))
 
         solution = greedy_randomized_construction(alpha)
         solution = local_search(solution, objective_function, neighbors, max_iterations)
@@ -67,6 +73,31 @@ def all_unique(x):
     seen = list()
     return not any(i in seen or seen.append(i) for i in x)
 
+def neighboring_knapsacks_weight_2(knapsack, p):
+    num_neighbors = max(1, int(len(knapsack)*p))
+
+    neighbors_count = 0
+    neighbors = []
+    while neighbors_count < num_neighbors:
+        item = random.sample(knapsack, 1)[0]
+
+        neighbor = knapsack.copy()
+        neighbor.remove(item)
+
+        remaining_weight = capacity - knapsack_weight(neighbor)
+        candidate_items = [i for i in items if can_add(i, neighbor, remaining_weight)]
+        while candidate_items:
+            new_item = random.choice(candidate_items)
+            neighbor.add(new_item)
+            remaining_weight -= weights[new_item]
+            candidate_items = [i for i in items if can_add(i, neighbor, remaining_weight)]
+
+        neighbors.append(neighbor)
+        neighbors_count += 1
+
+    return neighbors
+
+
 def neigboring_knapsacks_hamming_1(knapsack):
     """
     Return a list of knapsacks neighboring the one given. Here, a neighbor is a
@@ -89,7 +120,7 @@ def neigboring_knapsacks_hamming_1(knapsack):
 
     return neighbors
 
-def neighboring_knapsacks_weight_1(knapsack):
+def neighboring_knapsacks_weight_1(knapsack, p):
     """
     Return a list of knapsacks neighboring the one given. Here, a neighbor is a
     knapsack built by taking one item out of the original and filling it up
@@ -121,9 +152,9 @@ def neighboring_knapsacks_weight_1(knapsack):
         return unique
 
     neighbors = []
-    sample_size = min(10, max(1, int(len(knapsack)*0.05)))
-    items = random.sample(knapsack, sample_size)
-    for item in items:
+    for item in knapsack:
+        if random.random() > p:
+            continue
         item_removed = knapsack.copy()
         item_removed.remove(item)
         neighbors += fill_from(item_removed, item)
@@ -152,12 +183,48 @@ def neighboring_knapsacks_switch_1(knapsack):
 
     return neighbors
 
+def neighboring_knapsacks_switch_or_add_1(knapsack, p, q):
+    """
+    Return a list of knapsacks neighboring the one given. Here, a neighbor is a
+    knapsack built by taking one item out of the original and putting another
+    item in its place.
+    """
+    neighbors = []
+    if random.random() > p:
+        remain = capacity - knapsack_weight(knapsack)
+        valid_items = [i for i in items if can_add(i, knapsack, remain)]
+        if valid_items:
+            new_neighbors = [knapsack.copy() for i in valid_items]
+            for i, n in zip(valid_items, new_neighbors):
+                n.add(i)
+
+            neighbors += new_neighbors
+            return neighbors
+
+    for item in knapsack:
+        if random.random() > q:
+            continue
+
+        item_removed = knapsack.copy()
+        item_removed.remove(item)
+
+        remain = capacity - knapsack_weight(item_removed)
+        valid_items = [i for i in items if can_add(i, item_removed, remain) and i != item]
+        new_neighbors = [item_removed.copy() for i in valid_items]
+
+        for i, n in zip(valid_items, new_neighbors):
+            n.add(i)
+
+        neighbors += new_neighbors
+
+    return neighbors
+
 def greedy_randomized_knapsack_construction(alpha):
     """
     Construct a new knapsack using the greedy randomized construction algorithm.
     """
     knapsack = set()
-    incremental_profits = {i: float(weights[i])/profits[i] for i in items}
+    incremental_profits = {i: float(profits[i])/weights[i] for i in items}
     remain = capacity
     while remain > 0:
         # build rcl
@@ -199,7 +266,8 @@ num_items, capacity, items, weights, profits, conflicts = get_parameters(filenam
 filename = sys.argv[1]
 max_iterations = int(sys.argv[2])
 
-solution = grasp(greedy_randomized_knapsack_construction, hill_climbing, neighboring_knapsacks_weight_1, knapsack_profit, max_iterations, alpha)
-print os.path.basename(filename), knapsack_profit(solution)
+start_time = time.time()
+solution = grasp(greedy_randomized_knapsack_construction, hill_climbing, lambda x: neighboring_knapsacks_weight_2(x, 0.2), knapsack_profit, max_iterations, alpha)
+print knapsack_profit(solution), time.time() - start_time
 
 exit(0)
