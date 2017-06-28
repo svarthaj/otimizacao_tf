@@ -10,11 +10,11 @@ def get_parameters(filename):
     conflicts = {}
 
     for line in lines:
-        if "param n :=" in line:
+        if "param n" in line:
             n = int(line.split()[-1].split(";")[0])
-        elif "param c :=" in line:
+        elif "param c" in line:
             c = int(line.split()[-1].split(";")[0])
-        elif "param : V : p w :=" in line:
+        elif "param" in line:
             for i in range(lines.index(line)+1, lines.index(line)+n+1):
                 values = lines[i].split()
                 if len(values) == 3:
@@ -22,7 +22,7 @@ def get_parameters(filename):
                     items.add(it)
                     profits[it] = int(values[1])
                     weights[it] = int(values[2])
-        elif "set E :=" in line:
+        elif "set" in line:
             for i in range(lines.index(line)+1, len(lines)):
                 values = lines[i].split()
                 if len(values) == 2:
